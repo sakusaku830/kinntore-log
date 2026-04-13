@@ -336,7 +336,7 @@ function sync(d){
     var ne=document.getElementById('n-'+ex.id);if(ne)d[cur][ex.id].note=ne.value
   }
 }
-function addSet(id){var d=ld();if(!d[cur])d[cur]={};if(!d[cur][id])d[cur][id]={sets:[]};sync(d);d[cur][id].sets.push({r:''});sd(d);renderRecord()}
+function addSet(id){var d=ld();if(!d[cur])d[cur]={};if(!d[cur][id])d[cur][id]={sets:[]};sync(d);d[cur][id].sets.push({r:''});sd(d);var we=document.getElementById('wIn');if(we&&we.value){var W=lw();W[cur]=parseFloat(we.value);sw(W)}renderRecord()}
 function delSet(id,idx){var d=ld();sync(d);if(d[cur]&&d[cur][id]&&d[cur][id].sets.length>1){d[cur][id].sets.splice(idx,1);sd(d)}renderRecord()}
 function doSave(){
   var d=ld();sync(d);sd(d);
