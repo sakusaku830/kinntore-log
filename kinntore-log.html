@@ -336,7 +336,37 @@ function sync(d){
     var ne=document.getElementById('n-'+ex.id);if(ne)d[cur][ex.id].note=ne.value
   }
 }
-function addSet(id){var d=ld();if(!d[cur])d[cur]={};if(!d[cur][id])d[cur][id]={sets:[]};sync(d);d[cur][id].sets.push({r:''});sd(d);var we=document.getElementById('wIn');if(we&&we.value){var W=lw();W[cur]=parseFloat(we.value);sw(W)}renderRecord()}
+function addSet(id){
+  var d=ld();if(!d[cur])d[cur]={};
+  // 既存セットの入力値を先に確保
+  if(!d[cur][id])d[cur][id]={sets:[]};
+  var sets=d[cur][id].sets;
+  for(var j=0;j<sets.length;j++){
+    var el=document.getElementById('r-'+id+'-'+j);
+    if(el)sets[j].r=el.value;
+  }
+  // まだ1セットも描画されていない場合（初回）は入力欄から直接取得
+  if(sets.length===0){
+    var el0=document.getElementById('r-'+id+'-0');
+    if(el0&&el0.value)sets.push({r:el0.value});
+    else sets.push({r:''});
+  }
+  sets.push({r:''});
+  d[cur][id].sets=sets;
+  // 他の種目もsync
+  var EX=lex();
+  for(var i=0;i<EX.length;i++){
+    var ex=EX[i];if(ex.id===id)continue;
+    if(!d[cur][ex.id])d[cur][ex.id]={sets:[{}]};
+    var s2=d[cur][ex.id].sets;
+    for(var j=0;j<s2.length;j++){var el2=document.getElementById('r-'+ex.id+'-'+j);if(el2)s2[j].r=el2.value;}
+    var ne=document.getElementById('n-'+ex.id);if(ne)d[cur][ex.id].note=ne.value;
+  }
+  var ne2=document.getElementById('n-'+id);if(ne2)d[cur][id].note=ne2.value;
+  sd(d);
+  var we=document.getElementById('wIn');if(we&&we.value){var W=lw();W[cur]=parseFloat(we.value);sw(W)}
+  renderRecord();
+}
 function delSet(id,idx){var d=ld();sync(d);if(d[cur]&&d[cur][id]&&d[cur][id].sets.length>1){d[cur][id].sets.splice(idx,1);sd(d)}renderRecord()}
 function doSave(){
   var d=ld();sync(d);sd(d);
