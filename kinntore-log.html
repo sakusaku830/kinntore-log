@@ -235,9 +235,9 @@ var EL=[
   {name:'CHIN UP',e:'\uD83D\uDD19',cat:'\u4E0A\u534A\u8EAB',pl:['\u4E0A\u8155\u4E8C\u982D\u7B4B','\u5E83\u80CC\u7B4B'],sl:['\u83F1\u5F62\u7B4B']},
   {name:'INV ROW',e:'\uD83D\uDD19',cat:'\u4E0A\u534A\u8EAB',pl:['\u5E83\u80CC\u7B4B','\u83F1\u5F62\u7B4B'],sl:['\u4E0A\u8155\u4E8C\u982D\u7B4B','\u4F53\u5E79']},
   {name:'FACE PULL',e:'\uD83D\uDD19',cat:'\u4E0A\u534A\u8EAB',pl:['\u83F1\u5F62\u7B4B','\u4E09\u89D2\u7B4B\u5F8C\u90E8'],sl:['\u50E7\u5E3D\u7B4B']},
-  {name:'DEAD HANG',e:'\uD83D\uDD19',cat:'\u4E0A\u534A\u8EAB',pl:['\u524D\u8155\u5C48\u7B4B\u7FA4','\u5E83\u80CC\u7B4B'],sl:['\u4E0A\u8155\u4E8C\u982D\u7B4B','\u50E7\u5E3D\u7B4B']},
-  {name:'PLANK',e:'\uD83E\uDDD8',cat:'\u4F53\u5E79',pl:['\u4F53\u5E79\u5168\u4F53'],sl:['\u81C0\u7B4B','\u80A9']},
-  {name:'SIDE PLANK',e:'\uD83E\uDDD8',cat:'\u4F53\u5E79',pl:['\u8179\u659C\u7B4B','\u4F53\u5E79'],sl:['\u81C0\u7B4B']},
+  {name:'DEAD HANG',e:'\uD83D\uDD19',cat:'\u4E0A\u534A\u8EAB',pl:['\u524D\u8155\u5C48\u7B4B\u7FA4','\u5E83\u80CC\u7B4B'],sl:['\u4E0A\u8155\u4E8C\u982D\u7B4B','\u50E7\u5E3D\u7B4B'],unit:'sec'},
+  {name:'PLANK',e:'\uD83E\uDDD8',cat:'\u4F53\u5E79',pl:['\u4F53\u5E79\u5168\u4F53'],sl:['\u81C0\u7B4B','\u80A9'],unit:'sec'},
+  {name:'SIDE PLANK',e:'\uD83E\uDDD8',cat:'\u4F53\u5E79',pl:['\u8179\u659C\u7B4B','\u4F53\u5E79'],sl:['\u81C0\u7B4B'],unit:'sec'},
   {name:'CRUNCH',e:'\uD83E\uDDD8',cat:'\u4F53\u5E79',pl:['\u8179\u76F4\u7B4B'],sl:['\u8179\u659C\u7B4B']},
   {name:'BIRD DOG',e:'\uD83E\uDDD8',cat:'\u4F53\u5E79',pl:['\u4F53\u5E79','\u81C0\u7B4B'],sl:['\u80A9','\u30CF\u30E0\u30B9\u30C8']},
   {name:'DEAD BUG',e:'\uD83E\uDDD8',cat:'\u4F53\u5E79',pl:['\u8179\u76F4\u7B4B','\u4F53\u5E79'],sl:['\u8178\u8170\u7B4B']},
@@ -311,7 +311,7 @@ function renderRecord(){
       +'<button class="muscle-toggle" id="mt-'+eid+'" onclick="toggleMuscle(\''+eid+'\')" >&#128170; \u7B4B\u8089\u3092\u898B\u308B</button>'
       +'</div>'
       +muscleCard(eid)
-      +'<div class="col-lbls"><div></div><div class="col-lbl">\u56DE\u6570</div><div></div></div>'
+      +'<div class="col-lbls"><div></div><div class="col-lbl">'+(ex.unit==='sec'?'\u79D2\u6570':'\u56DE\u6570')+'</div><div></div></div>'
       +'<div class="sets-area">';
     for(var j=0;j<exd.sets.length;j++){
       var s=exd.sets[j],pr=prev&&prev.sets[j]?prev.sets[j].r||'':'',ph=pr?(ex.unit==='sec'?'\u524D\u56DE\uFF1A'+pr+'\u79D2':'\u524D\u56DE'+pr):(ex.unit==='sec'?'\u79D2\u6570':'\u56DE\u6570');
@@ -566,7 +566,7 @@ function renderStats(){
   wtH='<div class="wc-wrap"><svg width="100%" viewBox="-4 -18 '+(PW+8)+' '+(PH+22)+'" style="overflow:visible"><polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linejoin="round" opacity=".8"/>'+circles+'</svg><div style="font-size:.6rem;color:var(--mu)">\u76F4\u8FD1'+wDates.length+'\u65E5\u9593</div></div>'}
   else{wtH='<div style="font-size:.74rem;color:var(--mu);padding:8px 0">2\u65E5\u5206\u4EE5\u4E0A\u8A18\u9332\u3059\u308B\u3068\u30B0\u30E9\u30D5\u304C\u8868\u793A\u3055\u308C\u307E\u3059</div>'}
   var lwk=Object.keys(W).sort().pop(),lw2=lwk?W[lwk]:null;
-  var detH='';for(var i=0;i<EX.length;i++){var ex=EX[i];detH+='<div class="s-row"><div class="s-lbl">'+ex.e+' '+ex.name+'</div><div style="text-align:right"><div class="s-val">'+st[ex.id].reps+'<span style="font-size:.68rem;color:var(--mu);margin-left:3px">\u56DE</span></div><div style="font-size:.6rem;color:var(--mu)">'+st[ex.id].sess+'\u56DE\u5B9F\u65BD / '+st[ex.id].sets+'\u30BB\u30C3\u30C8</div></div></div>'}
+  var detH='';for(var i=0;i<EX.length;i++){var ex=EX[i];var unit=ex.unit==='sec'?'\u79D2':'\u56DE';detH+='<div class="s-row"><div class="s-lbl">'+ex.e+' '+ex.name+'</div><div style="text-align:right"><div class="s-val">'+st[ex.id].reps+'<span style="font-size:.68rem;color:var(--mu);margin-left:3px">'+unit+'</span></div><div style="font-size:.6rem;color:var(--mu)">'+st[ex.id].sess+'\u56DE\u5B9F\u65BD / '+st[ex.id].sets+'\u30BB\u30C3\u30C8</div></div></div>'}
   document.getElementById('page-stats').innerHTML=
     '<div class="s-sec"><div class="s-ttl">\u76F4\u8FD17\u65E5</div><div class="streak">'+dotH+'</div></div>'
     +'<div class="s-sec"><div class="s-ttl">&#9878;&#65039; \u4F53\u91CD\u63A8\u79FB</div>'+wtH+(lw2?'<div class="s-row"><div class="s-lbl">\u6700\u65B0\u4F53\u91CD</div><div class="s-val">'+lw2+'<span style="font-size:.68rem;color:var(--mu);margin-left:3px">kg</span></div></div>':'')+' </div>'
@@ -630,6 +630,21 @@ function showTab(name){var ns=['record','history','stats','settings'];for(var i=
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2400)}
 document.getElementById('tOv').addEventListener('click',function(ev){if(ev.target===this)closeTimer()});
 document.getElementById('mOv').addEventListener('click',function(ev){if(ev.target===this)closeModal()});
+// 起動時にDEFのunit情報をlocalStorageの種目データに同期
+(function syncUnits(){
+  var stored=localStorage.getItem('wlog_ex');
+  if(!stored)return;
+  try{
+    var ex=JSON.parse(stored),changed=false;
+    var defMap={};for(var i=0;i<DEF.length;i++)defMap[DEF[i].name]=DEF[i];
+    for(var j=0;j<ex.length;j++){
+      var dm=defMap[ex[j].name];
+      if(dm&&dm.unit&&ex[j].unit!==dm.unit){ex[j].unit=dm.unit;changed=true;}
+      else if(dm&&!dm.unit&&ex[j].unit){delete ex[j].unit;changed=true;}
+    }
+    if(changed)localStorage.setItem('wlog_ex',JSON.stringify(ex));
+  }catch(e){}
+})();
 renderRecord();renderHistory();renderStats();updT();
 
 </script>
