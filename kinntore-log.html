@@ -303,7 +303,7 @@ function renderRecord(){
     +'<div class="wt-card"><div class="wt-lbl">&#9878;&#65039; \u4F53\u91CD</div><div class="wt-wrap"><input class="wt-in" type="number" step="0.1" placeholder="--.-" value="'+wv+'" id="wIn"><span class="wt-unit">kg</span></div>'+(wpStr?'<div class="wt-prev">'+wpStr+'</div>':'')+' </div>';
   for(var i=0;i<EX.length;i++){
     var ex=EX[i],exd=day[ex.id]||{sets:[{r:''}]},prev=getPrev(ex.id);
-    var pt=prev?prev.sets.filter(function(s){return s.r}).map(function(s){return s.r+'\u56DE'}).join(' / '):'';
+    var pt=prev?prev.sets.filter(function(s){return s.r}).map(function(s){return s.r+(ex.unit==='sec'?'\u79D2':'\u56DE')}).join(' / '):'';
     var eid=ex.id;
     h+='<div class="ex-card">'
       +'<div class="ex-hd">'
@@ -314,7 +314,7 @@ function renderRecord(){
       +'<div class="col-lbls"><div></div><div class="col-lbl">\u56DE\u6570</div><div></div></div>'
       +'<div class="sets-area">';
     for(var j=0;j<exd.sets.length;j++){
-      var s=exd.sets[j],pr=prev&&prev.sets[j]?prev.sets[j].r||'':'',ph=pr?'\u524D\u56DE'+pr:'\u56DE\u6570';
+      var s=exd.sets[j],pr=prev&&prev.sets[j]?prev.sets[j].r||'':'',ph=pr?(ex.unit==='sec'?'\u524D\u56DE\uFF1A'+pr+'\u79D2':'\u524D\u56DE'+pr):(ex.unit==='sec'?'\u79D2\u6570':'\u56DE\u6570');
       h+='<div class="set-row"><div class="set-num">'+(j+1)+'</div>'
         +'<input class="set-in" type="number" min="0" placeholder="'+ph+'" value="'+(s.r||'')+'" id="r-'+eid+'-'+j+'">'
         +'<button class="del-btn" onclick="delSet(\''+eid+'\','+j+')">&#10005;</button></div>'
@@ -537,7 +537,7 @@ function renderHistory(){
       var ex=EX[j],exd=dd[ex.id];
       if(!exd||!exd.sets.some(function(s){return s.r}))continue;
       var bH='',vs=exd.sets.filter(function(s){return s.r});
-      for(var k=0;k<vs.length;k++)bH+='<span class="h-badge">'+(k+1)+': '+vs[k].r+'\u56DE</span>';
+      for(var k=0;k<vs.length;k++)bH+='<span class="h-badge">'+(k+1)+': '+vs[k].r+(ex.unit==='sec'?'\u79D2':'\u56DE')+'</span>';
       exH+='<div class="h-ex"><div class="h-ex-nm">'+ex.e+' '+ex.name+'</div><div class="h-sets">'+bH+'</div>'+(exd.note?'<div class="h-note">'+exd.note+'</div>':'')+' </div>'
     }
     if(!exH)continue;
