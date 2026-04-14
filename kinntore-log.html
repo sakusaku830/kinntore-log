@@ -252,7 +252,21 @@ function ld(){try{return JSON.parse(localStorage.getItem('wlog')||'{}')}catch(e)
 function sd(d){localStorage.setItem('wlog',JSON.stringify(d))}
 function lw(){try{return JSON.parse(localStorage.getItem('wlog_w')||'{}')}catch(e){return{}}}
 function sw(w){localStorage.setItem('wlog_w',JSON.stringify(w))}
-function lex(){try{var x=JSON.parse(localStorage.getItem('wlog_ex')||'null');return x||DEF}catch(e){return DEF}}
+function lex(){
+  try{
+    var x=JSON.parse(localStorage.getItem('wlog_ex')||'null');
+    if(!x)return DEF;
+    var elMap={};for(var i=0;i<EL.length;i++)elMap[EL[i].name]=EL[i];
+    var changed=false;
+    for(var j=0;j<x.length;j++){
+      var dm=elMap[x[j].name];
+      if(dm&&dm.unit&&x[j].unit!==dm.unit){x[j].unit=dm.unit;changed=true;}
+      else if(dm&&!dm.unit&&x[j].unit){delete x[j].unit;changed=true;}
+    }
+    if(changed)localStorage.setItem('wlog_ex',JSON.stringify(x));
+    return x;
+  }catch(e){return DEF}
+}
 function sex(x){localStorage.setItem('wlog_ex',JSON.stringify(x))}
 function getPrev(id){
   var d=ld(),keys=Object.keys(d).sort().filter(function(k){return k<cur});
@@ -598,8 +612,8 @@ function buildLibModal(){
   h+='</div><div id="ap-cus" style="display:none">'
     +'<input class="m-in" id="mEm" placeholder="\u7D75\u6587\u5B57">'
     +'<input class="m-in" id="mNm" placeholder="\u7A2E\u76EE\u540D\uFF08\u4F8B: DEADLIFT\uFF09">'
-    +'<input class="m-in" id="mPl" placeholder="\u30E1\u30A4\u30F3\u7B4B\u8089\uFF08\u4F8B: \u5927\u80F8\u7B4B,\u4E09\u982D\u7B4B\uFF09">'
-    +'<input class="m-in" id="mSl" placeholder="\u30B5\u30DD\u30FC\u30C8\u7B4B\u8089\uFF08\u4F8B: \u4E09\u89D2\u7B4B,\u4F53\u5E79\uFF09">'
+    +'<input class="m-in" id="mPl" placeholder="\u30E1\u30A4\u30F3\u7B4B\u8089\uFF08\u4F8B: \u5927\u80F8\u7B4B\u3001\u4E09\u982D\u7B4B\uFF09">'
+    +'<input class="m-in" id="mSl" placeholder="\u30B5\u30DD\u30FC\u30C8\u7B4B\u8089\uFF08\u4F8B: \u4E09\u89D2\u7B4B\u3001\u4F53\u5E79\uFF09">'
     +'</div>'
     +'<div class="m-row"><button class="m-btn n" onclick="closeModal()">\u30AD\u30E3\u30F3\u30BB\u30EB</button><button class="m-btn y" onclick="saveModal()">\u8FFD\u52A0</button></div></div>';
   return h;
@@ -619,8 +633,8 @@ function openEdit(id){editId=id;sLE=null;var EX=lex(),ex=null;for(var i=0;i<EX.l
 function closeModal(){document.getElementById('mOv').classList.remove('on')}
 function saveModal(){
   var EX=lex();
-  if(editId){var em=document.getElementById('mEm').value.trim()||'*';var nm=document.getElementById('mNm').value.trim().toUpperCase();if(!nm){toast('\u7A2E\u76EE\u540D\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044');return}var pl=(document.getElementById('mPl').value||'').split(',').map(function(s){return s.trim()}).filter(Boolean);var sl=(document.getElementById('mSl').value||'').split(',').map(function(s){return s.trim()}).filter(Boolean);for(var i=0;i<EX.length;i++)if(EX[i].id===editId){EX[i].e=em;EX[i].name=nm;EX[i].pl=pl;EX[i].sl=sl;break}}
-  else{var lP=document.getElementById('ap-lib');if(lP&&lP.style.display!=='none'){if(!sLE){toast('\u7A2E\u76EE\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044');return}EX.push({id:'ex_'+Date.now(),name:sLE.name,e:sLE.e,pl:sLE.pl,sl:sLE.sl})}else{var em2=document.getElementById('mEm').value.trim()||'*';var nm2=document.getElementById('mNm').value.trim().toUpperCase();if(!nm2){toast('\u7A2E\u76EE\u540D\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044');return}var pl2=(document.getElementById('mPl').value||'').split(',').map(function(s){return s.trim()}).filter(Boolean);var sl2=(document.getElementById('mSl').value||'').split(',').map(function(s){return s.trim()}).filter(Boolean);EX.push({id:'ex_'+Date.now(),name:nm2,e:em2,pl:pl2,sl:sl2})}}
+  if(editId){var em=document.getElementById('mEm').value.trim()||'*';var nm=document.getElementById('mNm').value.trim().toUpperCase();if(!nm){toast('\u7A2E\u76EE\u540D\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044');return}var pl=(document.getElementById('mPl').value||'').split(/[,、，]/).map(function(s){return s.trim()}).filter(Boolean);var sl=(document.getElementById('mSl').value||'').split(/[,、，]/).map(function(s){return s.trim()}).filter(Boolean);for(var i=0;i<EX.length;i++)if(EX[i].id===editId){EX[i].e=em;EX[i].name=nm;EX[i].pl=pl;EX[i].sl=sl;break}}
+  else{var lP=document.getElementById('ap-lib');if(lP&&lP.style.display!=='none'){if(!sLE){toast('\u7A2E\u76EE\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044');return}EX.push({id:'ex_'+Date.now(),name:sLE.name,e:sLE.e,pl:sLE.pl,sl:sLE.sl})}else{var em2=document.getElementById('mEm').value.trim()||'*';var nm2=document.getElementById('mNm').value.trim().toUpperCase();if(!nm2){toast('\u7A2E\u76EE\u540D\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044');return}var pl2=(document.getElementById('mPl').value||'').split(/[,、，]/).map(function(s){return s.trim()}).filter(Boolean);var sl2=(document.getElementById('mSl').value||'').split(/[,、，]/).map(function(s){return s.trim()}).filter(Boolean);EX.push({id:'ex_'+Date.now(),name:nm2,e:em2,pl:pl2,sl:sl2})}}
   sex(EX);closeModal();renderSettings();renderRecord();toast('\u4FDD\u5B58\u3057\u307E\u3057\u305F\uFF01')
 }
 function removeEx(id){var EX=lex();if(EX.length<=1){toast('\u6700\u4F4E1\u7A2E\u76EE\u5FC5\u8981\u3067\u3059');return}if(!confirm('\u3053\u306E\u7A2E\u76EE\u3092\u524A\u9664\u3057\u307E\u3059\u304B\uFF1F'))return;sex(EX.filter(function(x){return x.id!==id}));renderSettings();renderRecord();toast('\u524A\u9664\u3057\u307E\u3057\u305F')}
@@ -630,21 +644,6 @@ function showTab(name){var ns=['record','history','stats','settings'];for(var i=
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2400)}
 document.getElementById('tOv').addEventListener('click',function(ev){if(ev.target===this)closeTimer()});
 document.getElementById('mOv').addEventListener('click',function(ev){if(ev.target===this)closeModal()});
-// 起動時にEL（全ライブラリ）のunit情報をlocalStorageの種目データに同期
-(function syncUnits(){
-  var stored=localStorage.getItem('wlog_ex');
-  if(!stored)return;
-  try{
-    var ex=JSON.parse(stored),changed=false;
-    var elMap={};for(var i=0;i<EL.length;i++)elMap[EL[i].name]=EL[i];
-    for(var j=0;j<ex.length;j++){
-      var dm=elMap[ex[j].name];
-      if(dm&&dm.unit&&ex[j].unit!==dm.unit){ex[j].unit=dm.unit;changed=true;}
-      else if(dm&&!dm.unit&&ex[j].unit){delete ex[j].unit;changed=true;}
-    }
-    if(changed)localStorage.setItem('wlog_ex',JSON.stringify(ex));
-  }catch(e){}
-})();
 renderRecord();renderHistory();renderStats();updT();
 
 </script>
