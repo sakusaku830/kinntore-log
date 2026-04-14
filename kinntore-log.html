@@ -630,15 +630,15 @@ function showTab(name){var ns=['record','history','stats','settings'];for(var i=
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2400)}
 document.getElementById('tOv').addEventListener('click',function(ev){if(ev.target===this)closeTimer()});
 document.getElementById('mOv').addEventListener('click',function(ev){if(ev.target===this)closeModal()});
-// 起動時にDEFのunit情報をlocalStorageの種目データに同期
+// 起動時にEL（全ライブラリ）のunit情報をlocalStorageの種目データに同期
 (function syncUnits(){
   var stored=localStorage.getItem('wlog_ex');
   if(!stored)return;
   try{
     var ex=JSON.parse(stored),changed=false;
-    var defMap={};for(var i=0;i<DEF.length;i++)defMap[DEF[i].name]=DEF[i];
+    var elMap={};for(var i=0;i<EL.length;i++)elMap[EL[i].name]=EL[i];
     for(var j=0;j<ex.length;j++){
-      var dm=defMap[ex[j].name];
+      var dm=elMap[ex[j].name];
       if(dm&&dm.unit&&ex[j].unit!==dm.unit){ex[j].unit=dm.unit;changed=true;}
       else if(dm&&!dm.unit&&ex[j].unit){delete ex[j].unit;changed=true;}
     }
