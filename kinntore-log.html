@@ -544,7 +544,22 @@ function startSetTimer(eid,j){getACtx();
   if(secs<=0){toast('秒数を入力してください');return;}
   stEid=eid;stJ=j;stDur=secs;stRem=secs;
   document.getElementById('stOv').classList.add('on');
-  updST();startSTick();
+  // 5秒カウントダウンしてからスタート
+  var cd=5;
+  document.getElementById('stN').textContent=cd;
+  document.getElementById('stArc').style.strokeDashoffset=CIRC;
+  document.getElementById('stArc').classList.remove('red');
+  playTick();
+  var cdIv=setInterval(function(){
+    cd--;
+    if(cd>0){
+      document.getElementById('stN').textContent=cd;
+      playTick();
+    } else {
+      clearInterval(cdIv);
+      updST();startSTick();
+    }
+  },1000);
 }
 function closeSetTimer(){document.getElementById('stOv').classList.remove('on');stopSTick();}
 function resetSetTimer(){stopSTick();stRem=stDur;updST();startSTick();}
@@ -587,16 +602,16 @@ function playTick(){
 function playBeep(){
   try{
     var ctx=getACtx();if(!ctx)return;
-    var freqs=[880,660,880];
     var t=ctx.currentTime;
-    freqs.forEach(function(freq,i){
-      var o=ctx.createOscillator();
-      var g=ctx.createGain();
+    [1800,3600].forEach(function(f,i){
+      var o=ctx.createOscillator(),g=ctx.createGain();
       o.connect(g);g.connect(ctx.destination);
-      o.frequency.value=freq;o.type='sine';
-      g.gain.setValueAtTime(0.4,t+i*0.25);
-      g.gain.exponentialRampToValueAtTime(0.001,t+i*0.25+0.2);
-      o.start(t+i*0.25);o.stop(t+i*0.25+0.25);
+      o.type='sine';o.frequency.value=f;
+      var v=i===0?0.4:0.15;
+      g.gain.setValueAtTime(v,t);
+      g.gain.setValueAtTime(v,t+1.1);
+      g.gain.exponentialRampToValueAtTime(0.001,t+1.5);
+      o.start(t);o.stop(t+1.55);
     });
   }catch(e){}
 }
