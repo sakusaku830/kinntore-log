@@ -287,6 +287,16 @@ function lex(){
   }catch(e){return DEF}
 }
 function sex(x){localStorage.setItem('wlog_ex',JSON.stringify(x))}
+function lrt(){try{var x=JSON.parse(localStorage.getItem('wlog_rt')||'null');return x||{0:[],1:[],2:[],3:[],4:[],5:[],6:[]}}catch(e){return{0:[],1:[],2:[],3:[],4:[],5:[],6:[]}}}
+function srt(x){localStorage.setItem('wlog_rt',JSON.stringify(x))}
+function todaysEx(){
+  var EX=lex(),rt=lrt(),dow=new Date(cur+'T00:00:00').getDay();
+  var ids=rt[dow]||[];
+  if(!ids.length)return EX;
+  var result=[];
+  for(var i=0;i<ids.length;i++){for(var j=0;j<EX.length;j++)if(EX[j].id===ids[i]){result.push(EX[j]);break}}
+  return result;
+}
 function getPrev(id){
   var d=ld(),keys=Object.keys(d).sort().filter(function(k){return k<cur});
   for(var i=keys.length-1;i>=0;i--){
@@ -329,7 +339,7 @@ function toggleMuscle(id){
   if(btn)btn.textContent=el.classList.contains('open')?'\u25B2 \u9589\u3058\u308B':'\uD83D\uDCAA \u7B4B\u8089\u3092\u898B\u308B';
 }
 function renderRecord(){
-  var EX=lex(),d=ld(),day=d[cur]||{},W=lw(),wv=W[cur]||'';
+  var EX=todaysEx(),d=ld(),day=d[cur]||{},W=lw(),wv=W[cur]||'';
   var wks=Object.keys(W).sort().filter(function(k){return k<cur}),wpStr='';
   if(wks.length){var lv=W[wks[wks.length-1]];if(!wv){wpStr='\u524D\u56DE '+lv+'kg'}else{var df=(parseFloat(wv)-lv).toFixed(1),sg=df>0?'+':'',cl=df>0?'color:var(--ac2)':'color:var(--gr)';wpStr='\u524D\u56DE\u6BD4 <span style="'+cl+'">'+sg+df+'kg</span>'}}
   var h='<div class="date-nav"><button onclick="chD(-1)">&#8249;</button><div class="date-display">'+fmtD(cur)+'</div><button onclick="chD(1)">&#8250;</button></div>'
@@ -368,7 +378,7 @@ function renderRecord(){
   document.getElementById('page-record').innerHTML=h
 }
 function sync(d){
-  var EX=lex();if(!d[cur])d[cur]={};
+  var EX=todaysEx();if(!d[cur])d[cur]={};
   for(var i=0;i<EX.length;i++){
     var ex=EX[i];if(!d[cur][ex.id])d[cur][ex.id]={sets:[{}]};
     var sets=d[cur][ex.id].sets;
@@ -701,7 +711,107 @@ function renderStats(){
 function renderSettings(){
   var EX=lex(),listH='';
   for(var i=0;i<EX.length;i++){var ex=EX[i];var eid=ex.id;listH+='<div class="set-item"><div class="set-info"><span class="set-em">'+ex.e+'</span><span class="set-nm">'+ex.name+'</span></div><div class="set-btns"><button class="ed-btn" onclick="openEdit(\''+eid+'\')" >\u7DE8\u96C6</button><button class="rm-btn" onclick="removeEx(\''+eid+'\')" >\u524A\u9664</button></div></div>'}
-  document.getElementById('page-settings').innerHTML='<div class="sec-ttl">\u7A2E\u76EE\u7BA1\u7406</div>'+listH+'<button class="add-ex-btn" onclick="openAdd()">&#65291; \u7A2E\u76EE\u3092\u8FFD\u52A0</button><div class="sec-ttl">\u30C7\u30FC\u30BF</div><button class="io-btn" onclick="exportData()">&#128228; \u30C7\u30FC\u30BF\u3092\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8<span>\u30D0\u30C3\u30AF\u30A2\u30C3\u30D7\u7528JSON\u30D5\u30A1\u30A4\u30EB</span></button><button class="io-btn" onclick="document.getElementById(\'importFile\').click()">&#128229; \u30C7\u30FC\u30BF\u3092\u30A4\u30F3\u30DD\u30FC\u30C8<span>\u5225\u30C7\u30D0\u30A4\u30B9\u304B\u3089\u306E\u79FB\u884C</span></button><input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">'
+  // 週間ルーティンセクション
+  var rt=lrt(),wk=['\u65E5','\u6708','\u706B','\u6C34','\u6728','\u91D1','\u571F'];
+  var rtH='';
+  for(var d=0;d<7;d++){
+    var ids=rt[d]||[];
+    var cnt=ids.length;
+    var detail=cnt?cnt+'\u7A2E\u76EE':'\u5168\u7A2E\u76EE\u8868\u793A';
+    rtH+='<button class="io-btn" onclick="openRoutine('+d+')">'+wk[d]+'\u66DC\u65E5<span>'+detail+'</span></button>';
+  }
+  document.getElementById('page-settings').innerHTML=
+    '<div class="sec-ttl">\u9031\u9593\u30EB\u30FC\u30C6\u30A3\u30F3</div><div style="font-size:.7rem;color:var(--mu);padding:0 0 10px">\u66DC\u65E5\u3054\u3068\u306B\u7A2E\u76EE\u3092\u9078\u629E\u3002\u672A\u9078\u629E\u306A\u3089\u5168\u7A2E\u76EE\u8868\u793A\u3055\u308C\u307E\u3059</div>'+rtH
+    +'<div class="sec-ttl">\u7A2E\u76EE\u7BA1\u7406</div>'+listH
+    +'<button class="add-ex-btn" onclick="openAdd()">&#65291; \u7A2E\u76EE\u3092\u8FFD\u52A0</button>'
+    +'<div class="sec-ttl">\u30C7\u30FC\u30BF</div>'
+    +'<button class="io-btn" onclick="exportData()">&#128228; \u30C7\u30FC\u30BF\u3092\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8<span>\u30D0\u30C3\u30AF\u30A2\u30C3\u30D7\u7528JSON\u30D5\u30A1\u30A4\u30EB</span></button>'
+    +'<button class="io-btn" onclick="document.getElementById(\'importFile\').click()">&#128229; \u30C7\u30FC\u30BF\u3092\u30A4\u30F3\u30DD\u30FC\u30C8<span>\u5225\u30C7\u30D0\u30A4\u30B9\u304B\u3089\u306E\u79FB\u884C</span></button>'
+    +'<input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">'
+}
+var rtDow=0,rtIds=[];
+// 種目の推奨順スコア（低いほど先に実施）
+function exScore(ex){
+  var score=500;
+  var cat=ex.cat||'';
+  // カテゴリー順: 下半身(100) → 上半身(200) → 体幹(300)
+  if(cat.indexOf('\u4E0B\u534A\u8EAB')>=0)score=100;
+  else if(cat.indexOf('\u4E0A\u534A\u8EAB')>=0)score=200;
+  else if(cat.indexOf('\u4F53\u5E79')>=0)score=300;
+  // メイン筋肉の大きさで調整（大きい筋肉が多いほど先に）
+  var bigMuscles=['\u5927\u817F\u56DB\u982D\u7B4B','\u81C0\u7B4B','\u5E83\u80CC\u7B4B','\u5927\u80F8\u7B4B','\u30CF\u30E0\u30B9\u30C8'];
+  var smallMuscles=['\u4E0A\u8155\u4E8C\u982D\u7B4B','\u4E0A\u8155\u4E09\u982D\u7B4B','\u524D\u8155\u5C48\u7B4B\u7FA4','\u524D\u8155\u4F38\u7B4B\u7FA4','\u3075\u304F\u3089\u306F\u304E'];
+  var pl=ex.pl||[],bigCnt=0,smallCnt=0;
+  for(var i=0;i<pl.length;i++){
+    for(var j=0;j<bigMuscles.length;j++)if(pl[i].indexOf(bigMuscles[j])>=0)bigCnt++;
+    for(var j=0;j<smallMuscles.length;j++)if(pl[i].indexOf(smallMuscles[j])>=0)smallCnt++;
+  }
+  score-=bigCnt*20;
+  score+=smallCnt*10;
+  // 秒数種目（プランク等）は最後寄り
+  if(ex.unit==='sec')score+=30;
+  return score;
+}
+function autoSortRt(){
+  var EX=lex(),exMap={};for(var i=0;i<EX.length;i++)exMap[EX[i].id]=EX[i];
+  rtIds.sort(function(a,b){
+    var ea=exMap[a],eb=exMap[b];
+    if(!ea||!eb)return 0;
+    return exScore(ea)-exScore(eb);
+  });
+  renderRoutineModal();
+  toast('\u63A8\u5968\u9806\u306B\u4E26\u3079\u66FF\u3048\u307E\u3057\u305F');
+}
+function openRoutine(dow){
+  var rt=lrt();rtDow=dow;rtIds=(rt[dow]||[]).slice();
+  renderRoutineModal();
+}
+function renderRoutineModal(){
+  var EX=lex(),wk=['\u65E5','\u6708','\u706B','\u6C34','\u6728','\u91D1','\u571F'];
+  var exMap={};for(var i=0;i<EX.length;i++)exMap[EX[i].id]=EX[i];
+  // 選択済み（順番保持）
+  var selH='';
+  for(var i=0;i<rtIds.length;i++){
+    var ex=exMap[rtIds[i]];if(!ex)continue;
+    selH+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;background:var(--sf2);border:1px solid var(--ac);border-radius:8px;padding:6px 8px">'
+      +'<span style="flex:1;font-size:.8rem">'+(i+1)+'. '+ex.e+' '+ex.name+'</span>'
+      +'<button onclick="moveRt('+i+',-1)" style="background:none;border:1px solid var(--bd);color:var(--tx);border-radius:4px;padding:2px 8px;cursor:pointer"'+(i===0?' disabled':'')+'>\u25B2</button>'
+      +'<button onclick="moveRt('+i+',1)" style="background:none;border:1px solid var(--bd);color:var(--tx);border-radius:4px;padding:2px 8px;cursor:pointer"'+(i===rtIds.length-1?' disabled':'')+'>\u25BC</button>'
+      +'<button onclick="removeRt('+i+')" style="background:none;border:none;color:var(--mu);font-size:1rem;cursor:pointer;padding:0 4px">\u2715</button>'
+      +'</div>';
+  }
+  if(!selH)selH='<div style="font-size:.7rem;color:var(--mu);padding:8px 0">\u7A2E\u76EE\u3092\u4E0B\u304B\u3089\u8FFD\u52A0\u3057\u3066\u304F\u3060\u3055\u3044</div>';
+  var autoBtn=rtIds.length>=2?'<button onclick="autoSortRt()" style="width:100%;background:var(--sf2);border:1px solid var(--ac);color:var(--ac);border-radius:8px;padding:8px;font-size:.75rem;cursor:pointer;margin-top:4px">\uD83E\uDD16 \u63A8\u5968\u9806\u306B\u4E26\u3079\u308B</button>':'';
+  // 未選択（追加可能）
+  var availH='';
+  for(var i=0;i<EX.length;i++){
+    var ex=EX[i];if(rtIds.indexOf(ex.id)>=0)continue;
+    availH+='<button class="lib-btn" onclick="addRt(\''+ex.id+'\')" style="display:block;width:100%;text-align:left;margin-bottom:4px">+ '+ex.e+' '+ex.name+'</button>';
+  }
+  if(!availH)availH='<div style="font-size:.7rem;color:var(--mu);padding:8px 0">\u5168\u7A2E\u76EE\u9078\u629E\u6E08\u307F</div>';
+  var h='<div class="modal"><h3>'+['\u65E5','\u6708','\u706B','\u6C34','\u6728','\u91D1','\u571F'][rtDow]+'\u66DC\u65E5\u306E\u30EB\u30FC\u30C6\u30A3\u30F3</h3>'
+    +'<div style="font-size:.7rem;color:var(--mu);margin-bottom:12px">\u30A2\u30D7\u30EA\u306B\u8868\u793A\u3055\u308C\u308B\u9806\u756A\u3067\u4E26\u3079\u3089\u308C\u307E\u3059</div>'
+    +'<div style="font-size:.65rem;color:var(--ac);margin-bottom:6px;letter-spacing:.08em">\u9078\u629E\u6E08\u307F</div>'
+    +selH
+    +autoBtn
+    +'<div style="font-size:.65rem;color:var(--mu);margin-top:14px;margin-bottom:6px;letter-spacing:.08em">\u8FFD\u52A0\u53EF\u80FD</div>'
+    +availH
+    +'<div class="m-row"><button class="m-btn n" onclick="closeModal()">\u30AD\u30E3\u30F3\u30BB\u30EB</button><button class="m-btn y" onclick="saveRoutine()">\u4FDD\u5B58</button></div></div>';
+  document.getElementById('mOv').innerHTML=h;
+  document.getElementById('mOv').classList.add('on');
+}
+function addRt(id){rtIds.push(id);renderRoutineModal();}
+function removeRt(idx){rtIds.splice(idx,1);renderRoutineModal();}
+function moveRt(idx,dir){
+  var newIdx=idx+dir;
+  if(newIdx<0||newIdx>=rtIds.length)return;
+  var tmp=rtIds[idx];rtIds[idx]=rtIds[newIdx];rtIds[newIdx]=tmp;
+  renderRoutineModal();
+}
+function saveRoutine(){
+  var rt=lrt();rt[rtDow]=rtIds.slice();srt(rt);
+  closeModal();renderSettings();renderRecord();
+  toast('\u30EB\u30FC\u30C6\u30A3\u30F3\u3092\u4FDD\u5B58\u3057\u307E\u3057\u305F');
 }
 function buildLibModal(){
   var h='<div class="modal"><h3>\u7A2E\u76EE\u3092\u8FFD\u52A0</h3>'
@@ -742,8 +852,8 @@ function saveModal(){
   sex(EX);closeModal();renderSettings();renderRecord();toast('\u4FDD\u5B58\u3057\u307E\u3057\u305F\uFF01')
 }
 function removeEx(id){var EX=lex();if(EX.length<=1){toast('\u6700\u4F4E1\u7A2E\u76EE\u5FC5\u8981\u3067\u3059');return}if(!confirm('\u3053\u306E\u7A2E\u76EE\u3092\u524A\u9664\u3057\u307E\u3059\u304B\uFF1F'))return;sex(EX.filter(function(x){return x.id!==id}));renderSettings();renderRecord();toast('\u524A\u9664\u3057\u307E\u3057\u305F')}
-function exportData(){var data={workouts:ld(),weights:lw(),exercises:lex()};var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='kinntore-backup.json';a.click();URL.revokeObjectURL(url)}
-function importData(ev){var file=ev.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);if(data.workouts)sd(data.workouts);if(data.weights)sw(data.weights);if(data.exercises)sex(data.exercises);toast('\u30A4\u30F3\u30DD\u30FC\u30C8\u5B8C\u4E86\uFF01');renderRecord();renderHistory();renderStats();renderSettings()}catch(err){toast('\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F')}};reader.readAsText(file);ev.target.value=''}
+function exportData(){var data={workouts:ld(),weights:lw(),exercises:lex(),routine:lrt()};var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='kinntore-backup.json';a.click();URL.revokeObjectURL(url)}
+function importData(ev){var file=ev.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);if(data.workouts)sd(data.workouts);if(data.weights)sw(data.weights);if(data.exercises)sex(data.exercises);if(data.routine)srt(data.routine);toast('\u30A4\u30F3\u30DD\u30FC\u30C8\u5B8C\u4E86\uFF01');renderRecord();renderHistory();renderStats();renderSettings()}catch(err){toast('\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F')}};reader.readAsText(file);ev.target.value=''}
 function showTab(name){var ns=['record','history','stats','settings'];for(var i=0;i<ns.length;i++){var t=document.getElementById('tab-'+ns[i]),p=document.getElementById('page-'+ns[i]);if(ns[i]===name){t.classList.add('active');p.classList.add('active')}else{t.classList.remove('active');p.classList.remove('active')}}if(name==='settings')renderSettings()}
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2400)}
 document.getElementById('tOv').addEventListener('click',function(ev){if(ev.target===this)closeTimer()});
