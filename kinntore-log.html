@@ -630,9 +630,24 @@ function getACtx(){
   if(_aCtx&&_aCtx.state==='suspended'){try{_aCtx.resume();}catch(e){}}
   return _aCtx;
 }
+// 無音のダミー音を鳴らしてAudioContextをウォームアップ
+function warmupAudio(){
+  try{
+    var ctx=getACtx();if(!ctx)return;
+    var o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.0001,ctx.currentTime);
+    o.start(ctx.currentTime);
+    o.stop(ctx.currentTime+0.01);
+  }catch(e){}
+}
+// ページ全体のタップで一度AudioContextを初期化
+document.addEventListener('touchstart',function(){getACtx();warmupAudio();},{once:false,passive:true});
+document.addEventListener('click',function(){getACtx();warmupAudio();},{once:false,passive:true});
 function playTick(){
   try{
     var ctx=getACtx();if(!ctx)return;
+    if(ctx.state==='suspended'){ctx.resume();}
     var o=ctx.createOscillator();
     var g=ctx.createGain();
     o.connect(g);g.connect(ctx.destination);
@@ -646,6 +661,7 @@ function playTick(){
 function playBeep(){
   try{
     var ctx=getACtx();if(!ctx)return;
+    if(ctx.state==='suspended'){ctx.resume();}
     var t=ctx.currentTime;
     [1800,3600].forEach(function(f,i){
       var o=ctx.createOscillator(),g=ctx.createGain();
