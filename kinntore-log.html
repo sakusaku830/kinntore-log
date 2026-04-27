@@ -591,8 +591,10 @@ function updT(){document.getElementById('ringN').textContent=tRem;var arc=docume
 var stDur=0,stRem=0,stIv=null,stEid=null,stJ=null;
 function startSetTimer(eid,j){getACtx();requestWakeLock();
   var el=document.getElementById('r-'+eid+'-'+j);
-  var secs=el?parseInt(el.value)||0:0;
-  if(secs<=0){toast('秒数を入力してください');return;}
+  var EX=lex(),ex=null;for(var i=0;i<EX.length;i++)if(EX[i].id===eid){ex=EX[i];break}
+  var val=el?parseInt(el.value)||0:0;
+  var secs=(ex&&ex.unit==='min')?val*60:val;
+  if(secs<=0){toast((ex&&ex.unit==='min')?'\u5206\u6570\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044':'\u79D2\u6570\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044');return;}
   stEid=eid;stJ=j;stDur=secs;stRem=secs;
   document.getElementById('stOv').classList.add('on');
   // 5秒カウントダウンしてからスタート
