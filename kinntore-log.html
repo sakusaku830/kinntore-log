@@ -799,6 +799,7 @@ function renderSettings(){
         +'</button>';
     }
     cyH+='<button class="io-btn" onclick="addCycleDay()">&#65291; Day\u3092\u8FFD\u52A0</button>';
+    cyH+='<button class="io-btn" onclick="openShiftCycle()">\uD83D\uDDD3 \u4ECA\u65E5\u306EDay\u3092\u5909\u66F4</button>';
     cyH+='<button class="io-btn" onclick="disableCycle()" style="color:var(--mu)">\uD83D\uDEAB \u30B5\u30A4\u30AF\u30EB\u3092\u7121\u52B9\u5316</button>';
   } else {
     cyH='<div style="font-size:.7rem;color:var(--mu);padding:0 0 10px">\u30B5\u30A4\u30AF\u30EB\u306F\u65E5\u4ED8\u3092\u57FA\u6E96\u306B\u7E70\u308A\u8FD4\u3055\u308C\u307E\u3059\u3002\u4F8B: 3\u65E5\u30B5\u30A4\u30AF\u30EB\u306A\u3089Day1\u2192Day2\u2192Day3\u2192Day1\u2026</div>'
@@ -827,6 +828,34 @@ function enableCycle(){
   scy(cy);
   renderSettings();renderRecord();
   toast('\u30B5\u30A4\u30AF\u30EB\u3092\u6709\u52B9\u306B\u3057\u307E\u3057\u305F');
+}
+function openShiftCycle(){
+  var cy=lcy(),todayIdx=todaysCycleIdx();
+  var h='<div class="modal"><h3>\u4ECA\u65E5\u306EDay\u3092\u5909\u66F4</h3>'
+    +'<div style="font-size:.7rem;color:var(--mu);margin-bottom:14px">\u4ECA\u65E5\u3092\u4F55\u65E5\u76EE\u306B\u3059\u308B\u304B\u9078\u3093\u3067\u304F\u3060\u3055\u3044</div>';
+  for(var d=0;d<cy.days.length;d++){
+    var day=cy.days[d],isToday=d===todayIdx;
+    h+='<button class="lib-btn'+(isToday?' selected':'')+'" onclick="shiftCycleTo('+d+')" style="display:block;width:100%;text-align:left;margin-bottom:6px;padding:10px 12px">'
+      +'Day '+(d+1)+': '+(day.name||'Day '+(d+1))+(isToday?' \u2605\u73FE\u5728':'')
+      +'</button>';
+  }
+  h+='<div class="m-row"><button class="m-btn n" onclick="closeModal()">\u30AD\u30E3\u30F3\u30BB\u30EB</button></div></div>';
+  document.getElementById('mOv').innerHTML=h;
+  document.getElementById('mOv').classList.add('on');
+}
+function shiftCycleTo(targetIdx){
+  var cy=lcy();
+  // 今日がtargetIdxになるようにanchorを調整
+  var diff=daysDiff(cy.anchor,today());
+  var currentIdx=((diff%cy.days.length)+cy.days.length)%cy.days.length;
+  var shift=targetIdx-currentIdx;
+  // anchorをshift分ずらす
+  var anchor=new Date(cy.anchor+'T00:00:00');
+  anchor.setDate(anchor.getDate()-shift);
+  cy.anchor=anchor.toISOString().slice(0,10);
+  scy(cy);
+  closeModal();renderSettings();renderRecord();
+  toast('Day'+(targetIdx+1)+'\u306B\u5909\u66F4\u3057\u307E\u3057\u305F');
 }
 function disableCycle(){
   if(!confirm('\u30B5\u30A4\u30AF\u30EB\u8A2D\u5B9A\u3092\u7121\u52B9\u306B\u3057\u307E\u3059\u304B\uFF1F\u8A2D\u5B9A\u5185\u5BB9\u306F\u4FDD\u6301\u3055\u308C\u307E\u3059'))return;
