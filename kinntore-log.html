@@ -129,11 +129,13 @@ header span{font-size:.7rem;color:var(--mu)}
   <button class="tab active" id="tab-record" onclick="showTab('record')">&#x1F4DD; &#35352;&#37682;</button>
   <button class="tab" id="tab-history" onclick="showTab('history')">&#x1F4C5; &#23653;&#27704;</button>
   <button class="tab" id="tab-stats" onclick="showTab('stats')">&#x1F4CA; &#32113;&#35336;</button>
+  <button class="tab" id="tab-stretch" onclick="showTab('stretch')">&#x1F9D8; &#x30B9;&#x30C8;&#x30EC;&#x30C3;&#x30C1;</button>
   <button class="tab" id="tab-settings" onclick="showTab('settings')">&#x2699;&#xFE0F; &#35373;&#23450;</button>
 </div>
 <div id="page-record" class="page active"></div>
 <div id="page-history" class="page"></div>
 <div id="page-stats" class="page"></div>
+<div id="page-stretch" class="page"></div>
 <div id="page-settings" class="page"></div>
 
 <div class="t-ov" id="tOv">
@@ -1103,7 +1105,7 @@ function saveModal(){
 function removeEx(id){var EX=lex();if(EX.length<=1){toast('\u6700\u4F4E1\u7A2E\u76EE\u5FC5\u8981\u3067\u3059');return}if(!confirm('\u3053\u306E\u7A2E\u76EE\u3092\u524A\u9664\u3057\u307E\u3059\u304B\uFF1F'))return;sex(EX.filter(function(x){return x.id!==id}));renderSettings();renderRecord();toast('\u524A\u9664\u3057\u307E\u3057\u305F')}
 function exportData(){var data={workouts:ld(),weights:lw(),exercises:lex(),routine:lrt(),cycle:lcy()};var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='kinntore-backup.json';a.click();URL.revokeObjectURL(url)}
 function importData(ev){var file=ev.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);if(data.workouts)sd(data.workouts);if(data.weights)sw(data.weights);if(data.exercises)sex(data.exercises);if(data.routine)srt(data.routine);if(data.cycle)scy(data.cycle);toast('\u30A4\u30F3\u30DD\u30FC\u30C8\u5B8C\u4E86\uFF01');renderRecord();renderHistory();renderStats();renderSettings()}catch(err){toast('\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F')}};reader.readAsText(file);ev.target.value=''}
-function showTab(name){var ns=['record','history','stats','settings'];for(var i=0;i<ns.length;i++){var t=document.getElementById('tab-'+ns[i]),p=document.getElementById('page-'+ns[i]);if(ns[i]===name){t.classList.add('active');p.classList.add('active')}else{t.classList.remove('active');p.classList.remove('active')}}if(name==='settings')renderSettings()}
+function showTab(name){var ns=['record','history','stats','stretch','settings'];for(var i=0;i<ns.length;i++){var t=document.getElementById('tab-'+ns[i]),p=document.getElementById('page-'+ns[i]);if(ns[i]===name){t.classList.add('active');p.classList.add('active')}else{t.classList.remove('active');p.classList.remove('active')}}if(name==='settings')renderSettings();if(name==='stretch')renderStretch()}
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2400)}
 document.getElementById('tOv').addEventListener('click',function(ev){if(ev.target===this)closeTimer()});
 document.getElementById('stOv').addEventListener('click',function(ev){if(ev.target===this)closeSetTimer();});
