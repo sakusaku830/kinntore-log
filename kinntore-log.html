@@ -633,19 +633,51 @@ function setTimerEnd(){
 }
 // WakeLock - 画面オフ防止
 var _wakeLock=null;
+var _keepAliveIv=null;
+var _silentAudio=null;
 async function requestWakeLock(){
   try{
     if('wakeLock' in navigator){
       _wakeLock=await navigator.wakeLock.request('screen');
     }
   }catch(e){}
+  startKeepAlive();
 }
 async function releaseWakeLock(){
   try{if(_wakeLock){await _wakeLock.release();_wakeLock=null;}}catch(e){}
+  stopKeepAlive();
+}
+function startKeepAlive(){
+  stopKeepAlive();
+  // 30秒ごとにAudioContextをping＋WakeLock再取得（iOS対策）
+  _keepAliveIv=setInterval(function(){
+    try{
+      var ctx=getACtx();
+      if(ctx&&ctx.state==='suspended')ctx.resume();
+      if(ctx){var o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(0.0001,ctx.currentTime);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.01);}
+    }catch(e){}
+    // WakeLock再取得
+    if(!_wakeLock&&'wakeLock' in navigator){
+      try{navigator.wakeLock.request('screen').then(function(wl){_wakeLock=wl;});}catch(e){}
+    }
+  },30000);
+  // 無音audio要素でiOS Safari画面オフ防止（WakeLockが効かない場合のfallback）
+  try{
+    if(!_silentAudio){
+      _silentAudio=document.createElement('audio');
+      _silentAudio.setAttribute('loop','');
+      _silentAudio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+    }
+    _silentAudio.play().catch(function(){});
+  }catch(e){}
+}
+function stopKeepAlive(){
+  if(_keepAliveIv){clearInterval(_keepAliveIv);_keepAliveIv=null;}
+  try{if(_silentAudio){_silentAudio.pause();_silentAudio.currentTime=0;}}catch(e){}
 }
 document.addEventListener('visibilitychange',function(){
-  if(document.visibilityState==='visible'&&_wakeLock===null){
-    if(tIv||stIv)requestWakeLock();
+  if(document.visibilityState==='visible'){
+    if(tIv||stIv){requestWakeLock();getACtx();}
   }
 });
 var _aCtx=null;
@@ -763,15 +795,31 @@ function renderStats(){
   var mx=1;for(var i=0;i<EX.length;i++)if(st[EX[i].id].reps>mx)mx=st[EX[i].id].reps;
   var barH='';
   for(var i=0;i<EX.length;i++){var ex=EX[i],pct=Math.round(st[ex.id].reps/mx*100);barH+='<div class="bar-row"><div class="bar-lbl">'+ex.e+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%">'+(pct>12?'<span class="bar-v">'+st[ex.id].reps+'</span>':'')+' </div></div></div>'}
-  var wDates=Object.keys(W).sort().slice(-14),wtH='';
-  if(wDates.length>=2){var vals=wDates.map(function(k){return W[k]}),mn=Math.min.apply(null,vals)-.5,mx2=Math.max.apply(null,vals)+.5,PW=270,PH=65,pts=[],circles='';for(var i=0;i<vals.length;i++){var px=i/(vals.length-1)*PW,py=PH-((vals[i]-mn)/(mx2-mn)*PH);pts.push(px+','+py);var last=i===vals.length-1;circles+='<circle cx="'+px+'" cy="'+py+'" r="'+(last?4:3)+'" fill="'+(last?'var(--ac)':'var(--mu)')+'" />';if(last)circles+='<text x="'+px+'" y="'+(py-7)+'" font-size="9" fill="var(--ac)" text-anchor="middle" font-weight="bold">'+vals[i]+'kg</text>'}
-  wtH='<div class="wc-wrap"><svg width="100%" viewBox="-4 -18 '+(PW+8)+' '+(PH+22)+'" style="overflow:visible"><polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linejoin="round" opacity=".8"/>'+circles+'</svg><div style="font-size:.6rem;color:var(--mu)">\u76F4\u8FD1'+wDates.length+'\u65E5\u9593</div></div>'}
-  else{wtH='<div style="font-size:.74rem;color:var(--mu);padding:8px 0">2\u65E5\u5206\u4EE5\u4E0A\u8A18\u9332\u3059\u308B\u3068\u30B0\u30E9\u30D5\u304C\u8868\u793A\u3055\u308C\u307E\u3059</div>'}
-  var lwk=Object.keys(W).sort().pop(),lw2=lwk?W[lwk]:null;
+  var allWDates=Object.keys(W).sort(),wtH='';
+  var wtPeriod=window._wtPeriod||'7';
+  var wDates=allWDates;
+  if(wtPeriod==='7')wDates=allWDates.slice(-7);
+  else if(wtPeriod==='30')wDates=allWDates.slice(-30);
+  var periodBtns='<div style="display:flex;gap:6px;margin-bottom:8px">';
+  var pOpts=[['7','7\u65E5'],['30','30\u65E5'],['all','\u5168\u671F\u9593']];
+  for(var pi=0;pi<pOpts.length;pi++){var sel=wtPeriod===pOpts[pi][0];periodBtns+='<button onclick="window._wtPeriod=\''+pOpts[pi][0]+'\';renderStats()" style="flex:1;padding:6px 0;border-radius:8px;border:1px solid '+(sel?'var(--ac)':'var(--bd)')+';background:'+(sel?'var(--ac)':'var(--sf)')+';color:'+(sel?'#000':'var(--mu)')+';font-size:.72rem;font-weight:'+(sel?'700':'400')+';cursor:pointer">'+pOpts[pi][1]+'</button>'}
+  periodBtns+='</div>';
+  if(wDates.length>=2){var vals=wDates.map(function(k){return W[k]}),mn=Math.min.apply(null,vals),mx2=Math.max.apply(null,vals),range=mx2-mn||1,padY=range*0.15,mnP=mn-padY,mxP=mx2+padY,PW=290,PH=110,pts=[],circles='',gridH='',labelsH='';
+  var gridSteps=[mnP,mnP+(mxP-mnP)*0.25,mnP+(mxP-mnP)*0.5,mnP+(mxP-mnP)*0.75,mxP];
+  for(var gi=0;gi<gridSteps.length;gi++){var gy=PH-((gridSteps[gi]-mnP)/(mxP-mnP)*PH);gridH+='<line x1="0" y1="'+gy+'" x2="'+PW+'" y2="'+gy+'" stroke="var(--bd)" stroke-width="0.5" stroke-dasharray="3,3"/>';if(gi===0||gi===gridSteps.length-1||gi===2)labelsH+='<text x="-4" y="'+(gy+3)+'" font-size="7" fill="var(--mu)" text-anchor="end">'+gridSteps[gi].toFixed(1)+'</text>'}
+  for(var i=0;i<vals.length;i++){var px=i/(vals.length-1)*PW,py=PH-((vals[i]-mnP)/(mxP-mnP)*PH);pts.push(px+','+py);var first=i===0,last=i===vals.length-1;circles+='<circle cx="'+px+'" cy="'+py+'" r="'+(last||first?4:2.5)+'" fill="'+((last||first)?'var(--ac)':'var(--mu)')+'" />';if(first)circles+='<text x="'+px+'" y="'+(py-8)+'" font-size="8" fill="var(--mu)" text-anchor="start" font-weight="bold">'+vals[i]+'</text>';if(last)circles+='<text x="'+px+'" y="'+(py-8)+'" font-size="9" fill="var(--ac)" text-anchor="end" font-weight="bold">'+vals[i]+'</text>'}
+  var fd=wDates[0].slice(5).replace('-','/'),ld2=wDates[wDates.length-1].slice(5).replace('-','/');
+  var dateLabels='<text x="0" y="'+(PH+14)+'" font-size="7" fill="var(--mu)" text-anchor="start">'+fd+'</text><text x="'+PW+'" y="'+(PH+14)+'" font-size="7" fill="var(--mu)" text-anchor="end">'+ld2+'</text>';
+  wtH=periodBtns+'<div class="wc-wrap"><svg width="100%" viewBox="-28 -18 '+(PW+42)+' '+(PH+36)+'" style="overflow:visible">'+gridH+labelsH+'<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linejoin="round" opacity=".8"/>'+circles+dateLabels+'</svg><div style="font-size:.6rem;color:var(--mu)">'+(wtPeriod==='all'?'\u5168\u671F\u9593 ('+wDates.length+'\u65E5\u5206)':'\u76F4\u8FD1'+wDates.length+'\u65E5\u9593')+'</div></div>'}
+  else{wtH=periodBtns+'<div style="font-size:.74rem;color:var(--mu);padding:8px 0">2\u65E5\u5206\u4EE5\u4E0A\u8A18\u9332\u3059\u308B\u3068\u30B0\u30E9\u30D5\u304C\u8868\u793A\u3055\u308C\u307E\u3059</div>'}
+  var lwk=allWDates[allWDates.length-1],lw2=lwk?W[lwk]:null;
+  var fwk=allWDates[0],fw2=fwk?W[fwk]:null;
+  var diffH='';
+  if(fw2!==null&&lw2!==null&&allWDates.length>=2){var diff=lw2-fw2;var diffSign=diff>0?'+':'';var diffColor=diff<0?'#4ade80':diff>0?'#f87171':'var(--mu)';diffH='<div class="s-row"><div class="s-lbl">\u958B\u59CB\u4F53\u91CD <span style="font-size:.68rem;color:var(--mu)">('+fwk+')</span></div><div class="s-val">'+fw2+'<span style="font-size:.68rem;color:var(--mu);margin-left:3px">kg</span></div></div>'+'<div class="s-row"><div class="s-lbl">\u5909\u52D5</div><div class="s-val" style="color:'+diffColor+'">'+diffSign+diff.toFixed(1)+'<span style="font-size:.68rem;margin-left:3px">kg</span></div></div>'}
   var detH='';for(var i=0;i<EX.length;i++){var ex=EX[i];var unit=ex.unit==='sec'?'\u79D2':ex.unit==='min'?'\u5206':'\u56DE';detH+='<div class="s-row"><div class="s-lbl">'+ex.e+' '+ex.name+'</div><div style="text-align:right"><div class="s-val">'+st[ex.id].reps+'<span style="font-size:.68rem;color:var(--mu);margin-left:3px">'+unit+'</span></div><div style="font-size:.6rem;color:var(--mu)">'+st[ex.id].sess+'\u56DE\u5B9F\u65BD / '+st[ex.id].sets+'\u30BB\u30C3\u30C8</div></div></div>'}
   document.getElementById('page-stats').innerHTML=
     '<div class="s-sec"><div class="s-ttl">\u76F4\u8FD17\u65E5</div><div class="streak">'+dotH+'</div></div>'
-    +'<div class="s-sec"><div class="s-ttl">&#9878;&#65039; \u4F53\u91CD\u63A8\u79FB</div>'+wtH+(lw2?'<div class="s-row"><div class="s-lbl">\u6700\u65B0\u4F53\u91CD</div><div class="s-val">'+lw2+'<span style="font-size:.68rem;color:var(--mu);margin-left:3px">kg</span></div></div>':'')+' </div>'
+    +'<div class="s-sec"><div class="s-ttl">&#9878;&#65039; \u4F53\u91CD\u63A8\u79FB</div>'+wtH+(lw2?'<div class="s-row"><div class="s-lbl">\u6700\u65B0\u4F53\u91CD</div><div class="s-val">'+lw2+'<span style="font-size:.68rem;color:var(--mu);margin-left:3px">kg</span></div></div>':'')+diffH+' </div>'
     +'<div class="s-sec"><div class="s-ttl">\u5168\u4F53</div><div class="s-row"><div class="s-lbl">\u30C8\u30EC\u30FC\u30CB\u30F3\u30B0\u65E5\u6570</div><div class="s-val">'+keys.length+' \u65E5</div></div></div>'
     +'<div class="s-sec"><div class="s-ttl">\u7A2E\u76EE\u5225 \u7DCF\u56DE\u6570</div>'+barH+'</div>'
     +'<div class="s-sec"><div class="s-ttl">\u7A2E\u76EE\u5225 \u8A73\u7D30</div>'+detH+'</div>'
