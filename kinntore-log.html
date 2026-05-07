@@ -6,6 +6,23 @@
 <title>筋トレログ</title>
 <style>
 :root{--bg:#0e0e0e;--sf:#1a1a1a;--sf2:#242424;--ac:#e8ff00;--ac2:#ff4500;--tx:#f0f0f0;--mu:#666;--bd:#333;--gr:#39ff85}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes ringPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 var(--ac))}50%{transform:scale(1.04);filter:drop-shadow(0 0 14px var(--ac))}}
+@keyframes ringPulseRed{0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 var(--ac2))}50%{transform:scale(1.05);filter:drop-shadow(0 0 16px var(--ac2))}}
+.page.active{animation:fadeIn .25s ease-out}
+.ex-card,.wt-card{animation:fadeInUp .35s ease-out backwards}
+.ex-card:nth-of-type(1){animation-delay:.04s}.ex-card:nth-of-type(2){animation-delay:.08s}.ex-card:nth-of-type(3){animation-delay:.12s}.ex-card:nth-of-type(4){animation-delay:.16s}.ex-card:nth-of-type(5){animation-delay:.20s}.ex-card:nth-of-type(6){animation-delay:.24s}
+button{transition:transform .1s ease,opacity .15s}
+button:active{transform:scale(.94)}
+.ring.pulse{animation:ringPulse 1s ease-in-out infinite}
+.ring.pulse-red{animation:ringPulseRed .7s ease-in-out infinite}
+.voice-fab{position:fixed;right:16px;bottom:16px;width:60px;height:60px;border-radius:50%;background:var(--ac);color:#000;border:none;font-size:1.6rem;box-shadow:0 4px 16px rgba(0,0,0,.4);cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.voice-fab.listening{background:var(--ac2);color:#fff;animation:ringPulseRed 1.2s ease-in-out infinite}
+.voice-status{position:fixed;right:16px;bottom:84px;background:var(--sf);color:var(--tx);padding:10px 14px;border-radius:12px;font-size:.78rem;border:1px solid var(--ac);max-width:240px;z-index:99;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.voice-help{position:fixed;left:16px;right:90px;bottom:16px;background:var(--sf);color:var(--mu);padding:8px 12px;border-radius:10px;font-size:.62rem;line-height:1.5;border:1px solid var(--bd);z-index:99;display:none}
+.voice-fab.listening~.voice-help{display:block}
+.set-in.active-vc{border-color:var(--ac);box-shadow:0 0 0 2px rgba(232,255,0,.2)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--tx);font-family:-apple-system,sans-serif;padding-bottom:60px}
 header{padding:22px 20px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:baseline;gap:12px}
@@ -439,7 +456,10 @@ function addSet(id){
     if(el0&&el0.value)sets.push({r:el0.value});
     else sets.push({r:''});
   }
-  sets.push({r:''});
+  // 前セットの値を自動コピー（最後の有効な値を引き継ぐ）
+  var lastVal='';
+  for(var k=sets.length-1;k>=0;k--){if(sets[k].r){lastVal=sets[k].r;break}}
+  sets.push({r:lastVal});
   d[cur][id].sets=sets;
   // 他の種目もsync
   var EX=lex();
@@ -584,7 +604,7 @@ function setP(s){tDur=s;tRem=s;document.querySelectorAll('.pr-btn').forEach(func
 function resetTimer(){stopTick();tRem=tDur;updT();startTick()}
 function stopTick(){if(tIv){clearInterval(tIv);tIv=null}}
 function startTick(){tIv=setInterval(function(){tRem=Math.max(0,tRem-1);updT();if(tRem<=0){stopTick();timerEnd()}},1000)}
-function updT(){document.getElementById('ringN').textContent=tRem;var arc=document.getElementById('arc');arc.style.strokeDashoffset=CIRC*(1-(tDur>0?tRem/tDur:0));if(tRem<=10&&tRem>0)arc.classList.add('red');else arc.classList.remove('red');if(tRem<=5&&tRem>0)playTick();}
+function updT(){document.getElementById('ringN').textContent=tRem;var arc=document.getElementById('arc');arc.style.strokeDashoffset=CIRC*(1-(tDur>0?tRem/tDur:0));var ring=arc.parentNode.parentNode;if(tRem<=10&&tRem>0)arc.classList.add('red');else arc.classList.remove('red');if(tRem<=5&&tRem>0){ring.classList.add('pulse-red');ring.classList.remove('pulse');playTick()}else if(tRem<=15&&tRem>0){ring.classList.add('pulse');ring.classList.remove('pulse-red')}else{ring.classList.remove('pulse');ring.classList.remove('pulse-red')}}
 var stDur=0,stRem=0,stIv=null,stEid=null,stJ=null;
 function startSetTimer(eid,j){getACtx();requestWakeLock();
   var el=document.getElementById('r-'+eid+'-'+j);
@@ -620,8 +640,11 @@ function updST(){
   document.getElementById('stN').textContent=disp;
   var arc=document.getElementById('stArc');
   arc.style.strokeDashoffset=CIRC*(1-(stDur>0?stRem/stDur:0));
+  var ring=arc.parentNode.parentNode;
   if(stRem<=10&&stRem>0)arc.classList.add('red');else arc.classList.remove('red');
-  if(stRem<=5&&stRem>0)playTick();
+  if(stRem<=5&&stRem>0){ring.classList.add('pulse-red');ring.classList.remove('pulse');playTick()}
+  else if(stRem<=15&&stRem>0){ring.classList.add('pulse');ring.classList.remove('pulse-red')}
+  else{ring.classList.remove('pulse');ring.classList.remove('pulse-red')}
 }
 function setTimerEnd(){
   document.getElementById('stN').textContent='OK!';
@@ -1157,6 +1180,164 @@ document.getElementById('stOv').addEventListener('click',function(ev){if(ev.targ
 document.getElementById('mOv').addEventListener('click',function(ev){if(ev.target===this)closeModal()});
 renderRecord();renderHistory();renderStats();updT();
 
+// ===== 音声操作モード =====
+var _voiceMode=false,_voiceRec=null,_activeExId=null,_voiceShouldRestart=false;
+function getActiveExId(){
+  // 1. 現在フォーカスされている入力欄から取得
+  var ae=document.activeElement;
+  if(ae&&ae.id&&ae.id.indexOf('r-')===0){
+    var parts=ae.id.split('-');return parts[1];
+  }
+  // 2. 最後にタッチされた種目
+  if(_activeExId)return _activeExId;
+  // 3. 今日の最初の種目
+  var EX=todaysEx();return EX.length?EX[0].id:null;
+}
+function getActiveInput(){
+  var ae=document.activeElement;
+  if(ae&&ae.classList&&ae.classList.contains('set-in'))return ae;
+  // フォーカスがなければアクティブ種目の最初の空欄
+  var exId=getActiveExId();if(!exId)return null;
+  var inputs=document.querySelectorAll('[id^="r-'+exId+'-"]');
+  for(var i=0;i<inputs.length;i++)if(!inputs[i].value)return inputs[i];
+  return inputs.length?inputs[inputs.length-1]:null;
+}
+function highlightActive(){
+  document.querySelectorAll('.set-in.active-vc').forEach(function(e){e.classList.remove('active-vc')});
+  var t=getActiveInput();if(t)t.classList.add('active-vc');
+}
+function setVoiceStatus(msg){
+  var s=document.getElementById('voiceStatus');
+  if(!msg){if(s)s.remove();return;}
+  if(!s){s=document.createElement('div');s.id='voiceStatus';s.className='voice-status';document.body.appendChild(s);}
+  s.textContent=msg;
+}
+function toggleVoiceMode(){if(_voiceMode)stopVoiceMode();else startVoiceMode();}
+function startVoiceMode(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('\u3053\u306E\u30D6\u30E9\u30A6\u30B6\u3067\u306F\u97F3\u58F0\u5165\u529B\u4E0D\u53EF');return}
+  _voiceMode=true;_voiceShouldRestart=true;
+  document.getElementById('voiceFab').classList.add('listening');
+  requestWakeLock();getACtx();
+  highlightActive();
+  setVoiceStatus('\u{1F3A4} \u806B\u3044\u3066\u307E\u3059...');
+  startVoiceRec();
+}
+function startVoiceRec(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return;
+  var rec=new SR();rec.lang='ja-JP';rec.continuous=true;rec.interimResults=false;
+  rec.onresult=function(ev){
+    for(var i=ev.resultIndex;i<ev.results.length;i++){
+      if(ev.results[i].isFinal)processVoiceCommand(ev.results[i][0].transcript);
+    }
+  };
+  rec.onerror=function(e){
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){toast('\u30DE\u30A4\u30AF\u8A31\u53EF\u304C\u5FC5\u8981\u3067\u3059');stopVoiceMode();}
+  };
+  rec.onend=function(){if(_voiceShouldRestart&&_voiceMode){try{rec.start()}catch(e){setTimeout(function(){if(_voiceMode){try{startVoiceRec()}catch(e){}}},300)}}};
+  try{rec.start();_voiceRec=rec}catch(e){toast('\u97F3\u58F0\u5165\u529B\u8D77\u52D5\u5931\u6557')}
+}
+function stopVoiceMode(){
+  _voiceMode=false;_voiceShouldRestart=false;
+  document.getElementById('voiceFab').classList.remove('listening');
+  if(_voiceRec){try{_voiceRec.stop()}catch(e){}_voiceRec=null}
+  setVoiceStatus(null);
+  document.querySelectorAll('.set-in.active-vc').forEach(function(e){e.classList.remove('active-vc')});
+  if(!tIv&&!stIv)releaseWakeLock();
+}
+// 「いち」「に」など読み方の数字変換
+var _kanjiNum={'\u3072\u3068':1,'\u3072\u3068\u3064':1,'\u3044\u3061':1,'\u3075\u305F':2,'\u3075\u305F\u3064':2,'\u306B':2,'\u307F':3,'\u307F\u3063\u3064':3,'\u3055\u3093':3,'\u3088':4,'\u3088\u3093':4,'\u3088\u3063\u3064':4,'\u3057':4,'\u3044\u3064':5,'\u3054':5,'\u3080':6,'\u3080\u3063\u3064':6,'\u308D\u304F':6,'\u306A\u306A':7,'\u306A\u306A\u3064':7,'\u3057\u3061':7,'\u3084':8,'\u3084\u3063\u3064':8,'\u306F\u3061':8,'\u3053\u3053\u306E':9,'\u3053\u3053\u306E\u3064':9,'\u304D\u3085\u3046':9,'\u3068\u304A':10,'\u3058\u3085\u3046':10};
+function parseNum(txt){
+  var m=txt.match(/(\d+)/);if(m)return parseInt(m[1]);
+  for(var k in _kanjiNum)if(txt.indexOf(k)>-1)return _kanjiNum[k];
+  return null;
+}
+function processVoiceCommand(txt){
+  setVoiceStatus('\u{1F4DD} '+txt);
+  // 停止
+  if(/\u505C\u6B62|\u3084\u3081|\u7D42\u4E86|\u30B9\u30C8\u30C3\u30D7/.test(txt)){stopVoiceMode();toast('\u97F3\u58F0\u5165\u529B \u505C\u6B62');return;}
+  // 休憩 + 時間
+  var restMatch=txt.match(/\u4F11\u61A9(?:\u3092)?(?:\u306F)?\s*(\d+)\s*(\u79D2|\u5206|\u3073\u3087\u3046|\u3075\u3093)?/);
+  if(restMatch){
+    var n=parseInt(restMatch[1]);
+    var unit=restMatch[2]||'';
+    var seconds=(unit==='\u5206'||unit==='\u3075\u3093')?n*60:n;
+    startRestVoice(seconds);
+    toast('\u23F1 \u4F11\u61A9 '+n+(unit||'\u79D2')+' \u30B9\u30BF\u30FC\u30C8');
+    return;
+  }
+  // 休憩 (時間指定なし)
+  if(/\u4F11\u61A9|\u304D\u3085\u3046\u3051\u3044/.test(txt)){
+    startRestVoice(60);
+    toast('\u23F1 \u4F11\u61A9 60\u79D2 \u30B9\u30BF\u30FC\u30C8');
+    return;
+  }
+  // 次のセット
+  if(/\u6B21|\u3064\u304E|\u30BB\u30C3\u30C8\u8FFD\u52A0|\u8FFD\u52A0/.test(txt)){
+    var exId=getActiveExId();
+    if(exId){addSet(exId);highlightActive();toast('\u2795 \u6B21\u306E\u30BB\u30C3\u30C8\u8FFD\u52A0');}
+    return;
+  }
+  // 保存
+  if(/\u4FDD\u5B58|\u30BB\u30FC\u30D6|\u5B8C\u4E86|\u304B\u3093\u308A\u3087\u3046/.test(txt)){
+    doSave();toast('\u{1F4BE} \u4FDD\u5B58\u3057\u307E\u3057\u305F');return;
+  }
+  // 数値入力
+  var num=parseNum(txt);
+  if(num!==null){
+    var target=getActiveInput();
+    if(target){
+      target.value=num;
+      var ev2=document.createEvent('Event');ev2.initEvent('change',true,true);target.dispatchEvent(ev2);
+      // 自動で保存
+      var d=ld();if(!d[cur])d[cur]={};
+      var parts=target.id.split('-'),exId=parts[1],setIdx=parseInt(parts[2]);
+      if(!d[cur][exId])d[cur][exId]={sets:[]};
+      while(d[cur][exId].sets.length<=setIdx)d[cur][exId].sets.push({r:''});
+      d[cur][exId].sets[setIdx].r=String(num);sd(d);
+      toast('\u2705 '+num+' \u3092\u5165\u529B');
+      // 次の空欄へフォーカス移動
+      setTimeout(function(){
+        target.classList.remove('active-vc');
+        var inputs=document.querySelectorAll('[id^="r-'+exId+'-"]');
+        var nextEmpty=null;
+        for(var i=0;i<inputs.length;i++)if(!inputs[i].value&&inputs[i]!==target){nextEmpty=inputs[i];break}
+        if(nextEmpty)nextEmpty.classList.add('active-vc');
+        else target.classList.add('active-vc');
+      },100);
+    }
+    return;
+  }
+  setVoiceStatus('\u2753 '+txt);
+}
+function startRestVoice(seconds){
+  var exId=getActiveExId();
+  if(!exId){toast('\u7A2E\u76EE\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093');return;}
+  tDur=seconds;tRem=seconds;
+  // プリセットボタンのアクティブ表示更新
+  document.querySelectorAll('.pr-btn').forEach(function(b){b.classList.remove('on')});
+  var pb=document.getElementById('p'+seconds);if(pb)pb.classList.add('on');
+  openTimer(exId);
+}
+// 入力欄フォーカスでアクティブ種目更新
+document.addEventListener('focusin',function(e){
+  if(e.target&&e.target.id&&e.target.id.indexOf('r-')===0){
+    var parts=e.target.id.split('-');_activeExId=parts[1];
+    if(_voiceMode)highlightActive();
+  }
+});
+// 種目カードタップでアクティブ更新
+document.addEventListener('click',function(e){
+  var card=e.target.closest&&e.target.closest('.ex-card');
+  if(card){
+    var firstIn=card.querySelector('.set-in');
+    if(firstIn){var parts=firstIn.id.split('-');_activeExId=parts[1];if(_voiceMode)highlightActive();}
+  }
+});
+
 </script>
+<button id="voiceFab" class="voice-fab" onclick="toggleVoiceMode()" aria-label="\u97F3\u58F0\u5165\u529B">&#127908;</button>
+<div class="voice-help">\u300c10\u300d\u300c\u4F11\u61A960\u79D2\u300d\u300c\u6B21\u300d\u300c\u4FDD\u5B58\u300d\u300c\u505C\u6B62\u300d</div>
 </body>
 </html>
